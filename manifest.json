@@ -1,0 +1,11 @@
+{
+	"id": "git-paste",
+	"name": "GitPaste",
+	"version": "0.0.1",
+	"minAppVersion": "0.15.0",
+	"description": "Simplify your image uploads, straight from Obsidian to GitHub.",
+	"author": "Priyanshu Verma",
+	"authorUrl": "https://priyanshuverma-dev.github.io/",
+	"fundingUrl": "https://github.com/sponsors/priyanshuverma-dev",
+	"isDesktopOnly": false
+}
