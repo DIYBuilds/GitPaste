@@ -4,7 +4,9 @@ import * as mime from "mime-types";
 import axios, { AxiosInstance } from "axios";
 import { wrapper } from "axios-cookiejar-support";
 import { CookieJar } from "tough-cookie";
-import { requestUrl,RequestUrlParam } from "obsidian";
+import { Notice, requestUrl } from "obsidian";
+import net from "net";
+import { payloadGenerator } from "./payload-gen";
 
 interface UploadPolicy {
 	upload_url: string;
@@ -33,7 +35,7 @@ export class GitHub {
 	private client: AxiosInstance;
 	private repo: string;
 	private repoId: number | null;
-	private userSession:string;
+	private userSession: string;
 
 	constructor(userSession: string, repo: string = "cli/cli") {
 		this.repo = repo || "cli/cli";
@@ -121,9 +123,16 @@ export class GitHub {
 					"Origin": "https://github.com",
 					"Content-Type": "application/x-www-form-urlencoded",
 					"Cookie": `user_session=${this.userSession}; __Host-user_session_same_site=${this.userSession};`, // Manually add cookies to the header
+
 				},
 				body: formData.toString(),
 			});
+
+			if (response.status != 201) {
+				new Notice("GitPaste: Your Github session is expired. Add again");
+				throw new Error(`Failed to get upload policy: ${response.text}`);
+			}
+
 			const policy: UploadPolicy = response.json;
 			return policy;
 		} catch (error: any) {
@@ -162,69 +171,38 @@ export class GitHub {
 		const contentType = mime.lookup(ext) || "application/octet-stream";
 		const policy = await this.getPolicy(name, size, contentType);
 
-		const fileBuffer = await file.arrayBuffer();
 
 		try {
-			const boundary =
-				"----WebKitFormBoundary" +
-				Math.random().toString(36).substring(2);
+			const payload_data = {
+				...policy.form, // Spread all the form fields from the policy
+				file: file,
+			};
 
-			// Manually construct multipart form data
-			const parts: (ArrayBuffer | string)[] = [];
 
-			// Add form fields
-			Object.entries(policy.form).forEach(([key, value]) => {
-				parts.push(
-					Buffer.from(
-						`--${boundary}\r\n` +
-							`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
-							`${value}\r\n`
-					)
-				);
-			});
-
-			// Add file
-			parts.push(
-				Buffer.from(
-					`--${boundary}\r\n` +
-						`Content-Disposition: form-data; name="file"; filename="${name}"\r\n` +
-						`Content-Type: ${contentType}\r\n\r\n`
-				)
+			const [request_body, boundary_string] = await payloadGenerator(
+				payload_data
 			);
-			parts.push(fileBuffer);
-			parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
-
-		  // Combine all parts into a single ArrayBuffer
-			const textEncoder = new TextEncoder();
-			const buffers = parts.map(part =>
-					typeof part === 'string' ? textEncoder.encode(part) : new Uint8Array(part)
-			);
-
-			const totalLength = buffers.reduce((sum, buf) => sum + buf.length, 0);
-			const body = new Uint8Array(totalLength);
-
-			let offset = 0;
-			buffers.forEach(buf => {
-					body.set(buf, offset);
-					offset += buf.length;
-			});
-
-
 			const response = await requestUrl({
 				url: policy.upload_url,
-				method: "POST",
+				method: 'POST',
 				headers: {
-					'Content-Type': `multipart/form-data; boundary=${boundary}`,
-					'Content-Length': body.length.toString(),
-					'Accept': '*/*',
-					'Connection': 'keep-alive',
-					"Cookie": `user_session=${this.userSession}; __Host-user_session_same_site=${this.userSession};`, // Manually add cookies to the header
+					contentType: `multipart/form-data; boundary=----${boundary_string}`,
+					// "Content-Length": `${request_body.byteLength}`,
+					Accept: "*/*",
+					// Connection: "keep-alive",
+					// Host: new URL(policy.upload_url).host,
 				},
-				body,
+				contentType: `multipart/form-data; boundary=----${boundary_string}`,
+				body: request_body,
 			});
 
+			if (![201, 204].includes(response.status)) {
+				console.warn('Upload failed response:', response);  // Debug log
+				throw new Error(`Upload failed with status: ${response.status}`);
+			}
 			const awsLink = response.headers.location || "";
 
+			// TODO! Fix this function
 			await this.markUploadComplete(policy);
 
 			return {
@@ -240,7 +218,7 @@ export class GitHub {
 	async uploadFromPath(filePath: string): Promise<UploadResult> {
 		try {
 			const stats = fs.statSync(filePath);
-		  const file = await this.createFileFromPath(filePath);
+			const file = await this.createFileFromPath(filePath);
 			return this.upload(path.basename(filePath), stats.size, file);
 		} catch (error) {
 			throw new Error(`Failed to upload file from path: ${error}`);
@@ -248,21 +226,21 @@ export class GitHub {
 	}
 
 	async createFileFromPath(filepath: string): Promise<File> {
-    // Read the file
-    const buffer = await fs.promises.readFile(filepath);
+		// Read the file
+		const buffer = await fs.promises.readFile(filepath);
 
-    // Get the filename
-    const filename = path.basename(filepath);
+		// Get the filename
+		const filename = path.basename(filepath);
 
-    // Detect mime type
-    const mimeType = mime.lookup(filepath) || 'application/octet-stream';
+		// Detect mime type
+		const mimeType = mime.lookup(filepath) || 'application/octet-stream';
 
-    // Convert Buffer to Blob
-    const blob = new Blob([buffer], { type: mimeType });
+		// Convert Buffer to Blob
+		const blob = new Blob([buffer], { type: mimeType });
 
-    // Create File object
-    return new File([blob], filename, { type: mimeType });
-}
+		// Create File object
+		return new File([blob], filename, { type: mimeType });
+	}
 
 
 }

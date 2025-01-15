@@ -26,6 +26,8 @@
 		"@types/mime-types": "^2.1.4",
 		"axios": "^1.7.9",
 		"axios-cookiejar-support": "^5.0.5",
+		"file-api": "^0.10.4",
+		"form-data": "^4.0.1",
 		"mime-types": "^2.1.35",
 		"tough-cookie": "^5.1.0"
 	}
