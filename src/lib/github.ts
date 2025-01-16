@@ -1,11 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as mime from "mime-types";
-import axios, { AxiosInstance } from "axios";
-import { wrapper } from "axios-cookiejar-support";
-import { CookieJar } from "tough-cookie";
-import { Notice, requestUrl } from "obsidian";
-import net from "net";
+import { requestUrl } from "obsidian";
 import { payloadGenerator } from "./payload-gen";
 
 interface UploadPolicy {
@@ -32,7 +28,6 @@ interface UploadResult {
 }
 
 export class GitHub {
-	private client: AxiosInstance;
 	private repo: string;
 	private repoId: number | null;
 	private userSession: string;
@@ -41,45 +36,6 @@ export class GitHub {
 		this.repo = repo || "cli/cli";
 		this.repoId = this.repo === "cli/cli" ? 212613049 : null;
 		this.userSession = userSession;
-
-		const jar = new CookieJar(); // Initialize a new cookie jar
-
-		jar.setCookieSync(
-			`user_session=${userSession}; Secure; SameSite=Lax`,
-			"https://github.com"
-		);
-		jar.setCookieSync(
-			`__Host-user_session_same_site=${userSession}; Secure; SameSite=Lax`,
-			"https://github.com"
-		);
-
-		this.client = wrapper(
-			axios.create({
-				baseURL: "https://github.com",
-				headers: {
-					"User-Agent":
-						"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-					"X-Requested-With": "XMLHttpRequest",
-				},
-				jar, // Attach CookieJar
-				withCredentials: true, // Allow cookies to be sent with requests
-			})
-		);
-
-		this.client.interceptors.request.use((config) => {
-			const cookies = jar.getCookiesSync("https://github.com");
-			return config;
-		});
-
-		// Fallback: Manually add cookies if needed
-		this.client.interceptors.request.use((config) => {
-			const cookies = jar
-				.getCookiesSync("https://github.com")
-				.map((cookie) => cookie.cookieString())
-				.join("; ");
-			config.headers["Cookie"] = cookies;
-			return config;
-		});
 	}
 
 	private async getRepoId(): Promise<number | null> {
@@ -123,14 +79,17 @@ export class GitHub {
 					"Origin": "https://github.com",
 					"Content-Type": "application/x-www-form-urlencoded",
 					"Cookie": `user_session=${this.userSession}; __Host-user_session_same_site=${this.userSession};`, // Manually add cookies to the header
+					"User-Agent":
+						"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+					"X-Requested-With": "XMLHttpRequest",
 
 				},
 				body: formData.toString(),
 			});
 
 			if (response.status != 201) {
-				new Notice("GitPaste: Your Github session is expired. Add again");
-				throw new Error(`Failed to get upload policy: ${response.text}`);
+				console.error(response.text)
+				throw new Error("Your Github session is expired. Add again");
 			}
 
 			const policy: UploadPolicy = response.json;
@@ -154,8 +113,13 @@ export class GitHub {
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",
 					"Cookie": `user_session=${this.userSession}; __Host-user_session_same_site=${this.userSession};`, // Manually add cookies to the header
+					"User-Agent":
+						"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+					"X-Requested-With": "XMLHttpRequest",
 				},
+				contentType: "application/x-www-form-urlencoded",
 				body: formData.toString(),
+				throw: false
 			});
 		} catch (error) {
 			throw new Error(`Failed to mark upload as complete: ${error}`);
@@ -187,22 +151,21 @@ export class GitHub {
 				method: 'POST',
 				headers: {
 					contentType: `multipart/form-data; boundary=----${boundary_string}`,
-					// "Content-Length": `${request_body.byteLength}`,
 					Accept: "*/*",
-					// Connection: "keep-alive",
-					// Host: new URL(policy.upload_url).host,
+					"User-Agent":
+						"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+					"X-Requested-With": "XMLHttpRequest",
 				},
 				contentType: `multipart/form-data; boundary=----${boundary_string}`,
 				body: request_body,
 			});
 
 			if (![201, 204].includes(response.status)) {
-				console.warn('Upload failed response:', response);  // Debug log
 				throw new Error(`Upload failed with status: ${response.status}`);
 			}
+
 			const awsLink = response.headers.location || "";
 
-			// TODO! Fix this function
 			await this.markUploadComplete(policy);
 
 			return {
@@ -210,7 +173,6 @@ export class GitHub {
 				awsLink,
 			};
 		} catch (error) {
-			console.log(error);
 			throw new Error(`Failed to upload file: ${error}`);
 		}
 	}

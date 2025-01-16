@@ -1,94 +1,149 @@
-# Obsidian Sample Plugin
+# GitPaste Plugin for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+GitPaste is an Obsidian plugin designed to simplify handling and managing images in your notes. With GitPaste, you can easily upload images to GitHub, replace local references with GitHub URLs, and organize your image management workflow more efficiently.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+---
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## 🎯 Features
 
-## First time developing plugins?
+1. **Drag-and-Drop Upload**:
 
-Quick starting guide for new plugin devs:
+    - Drag and drop images into Obsidian to automatically upload them to GitHub.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+2. **Clipboard Integration**:
 
-## Releasing new releases
+    - Paste images directly into your notes and upload them seamlessly.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+3. **Local Image Replacement**:
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+    - Automatically replace local image links with their GitHub URLs in Markdown.
 
-## Adding your plugin to the community plugin list
+4. **Delete Local Images** _(Optional)_:
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+    - Automatically delete local images after uploading them to GitHub.
 
-## How to use
+5. **Image URL Logging** _(Optional)_:
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+    - Save all uploaded image URLs to a user-specified database file.
 
-## Manually installing the plugin
+6. **Customizable Settings**:
+    - Configure GitHub session, toggle deletion of local images, and manage logging preferences.
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+---
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+## 🚀 Installation
 
-## Funding URL
+1. Clone or download the repository.
+2. Place the plugin in your Obsidian plugins folder:
+    ```
+    <Your Vault>/.obsidian/plugins/gitpaste
+    ```
+3. Restart Obsidian and enable **GitPaste** in the plugin settings.
 
-You can include funding URLs where people who use your plugin can financially support it.
+---
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+## ⚙️ Configuration
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+### 1. **GitHub Session**
+
+-   **Description**: Required for uploading images to GitHub.
+-   **How to Add**:
+    -   Copy your GitHub session cookie (see the instructions below).
+    -   Paste it into the "GitHub Session" field in the plugin settings.
+
+### 2. **Delete Local Images**
+
+-   **Description**: When enabled, deletes the local image file after uploading it to GitHub.
+-   **How to Use**:
+    -   Enable or disable it from the plugin settings.
+
+### 3. **Log Uploaded Image URLs**
+
+-   **Description**: Save URLs of uploaded images to a database file.
+-   **How to Set Up**:
+    -   Toggle logging in the plugin settings.
+    -   Specify the path to the database file (e.g., `attachments/image_urls.md`).
+
+---
+
+## 🛠️ How to Get Your GitHub Session Cookie
+
+1. Open your browser and go to [GitHub.com](https://github.com/).
+2. Log into your GitHub account.
+3. Open the **Developer Tools** (usually accessible via `F12` or `Ctrl+Shift+I`).
+4. Navigate to the **Application** tab (or **Storage** in some browsers).
+5. Look for the **Cookies** section and find the `github.com` domain.
+6. Locate the cookie named `user_session` (or a similar session key like `__Host-user_session_same_site`).
+7. Copy its value and paste it into the "GitHub Session" field in the plugin settings.
+
+> ⚠️ **Warning**: Your GitHub session cookie is sensitive information. Do not share it publicly or with untrusted individuals.
+
+---
+
+## 📝 Usage
+
+### Uploading and Replacing Images
+
+1. **Drag and Drop**:
+
+    - Drag any image file into your note.
+    - GitPaste will upload the image to GitHub and replace the local reference with the GitHub URL.
+
+2. **Pasting from Clipboard**:
+
+    - Copy an image (e.g., using Snipping Tool).
+    - Paste it directly into your note.
+
+3. **Automatic Replacement**:
+
+    - Local references like `![[image.png]]` will be replaced with GitHub links like:
+        ```markdown
+        ![image.png](https://github.com/user-attachments/assets/7e2baacd-21b1-4f8f-b502-32d2cbd5)
+        ```
+
+4. **Logging Uploaded URLs** _(Optional)_:
+    - If enabled, GitPaste saves all uploaded URLs to a file for future reference.
+
+---
+
+## 🔧 Settings Overview
+
+| Setting                | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| **GitHub Session**     | Required to upload images to GitHub.                    |
+| **Delete Local Image** | Toggle whether to delete local images after uploading.  |
+| **Enable Logging**     | Save uploaded image URLs to a user-specified file.      |
+| **Database File Path** | Path to the file where URLs will be saved (if enabled). |
+
+---
+
+## 📂 Example Log File (Database File)
+
+If logging is enabled, GitPaste will save URLs to the specified file. Example file content:
+
+```markdown
+# Uploaded Images
+
+-   **[2025-01-16]** ![example.png](https://github.com/user-attachments/assets/7e2baacd-21b1-4f8f-b502-32d2cbd5)
+-   **[2025-01-17]** ![diagram.jpg](https://github.com/user-attachments/assets/7e2baacd-21b1-4f8f-b502)
 ```
 
-If you have multiple URLs, you can also do:
+---
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+## 📜 License
 
-## API Documentation
+This plugin is open-source and distributed under the [MIT License](LICENSE).
 
-See https://github.com/obsidianmd/obsidian-api
+---
+
+## 🛠️ Contributing
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Submit a pull request with a detailed description of your changes.
+
+---
+
+## 💬 Support
+
+For questions, issues, or suggestions, open an issue on the [GitHub repository](https://github.com/keptcodes/gitpaste).
