@@ -146,4 +146,4 @@ This plugin is open-source and distributed under the [MIT License](LICENSE).
 
 ## 💬 Support
 
-For questions, issues, or suggestions, open an issue on the [GitHub repository](https://github.com/keptcodes/gitpaste).
+For questions, issues, or suggestions, open an issue on the [GitHub repository](https://github.com/DIYBuilds/GitPaste).
